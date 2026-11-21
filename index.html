@@ -44,6 +44,12 @@ canvas#cv3d { width: 100%; height: 100%; display: block; touch-action: none; }
 h1 { font-family: var(--display); font-size: clamp(18px, 3.2vw, 26px); margin: 0; line-height: 1.15; text-wrap: balance; }
 .legend { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--soft); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; pointer-events: auto; }
 .legend span { display: flex; align-items: center; gap: 8px; }
+.legwrap { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; pointer-events: auto; max-width: 330px; }
+.legend .lg { font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--green); font-weight: 600; margin-top: 4px; }
+.legend .lg:first-child { margin-top: 0; }
+.legend .fora { margin: 4px 0 0; font-size: 11px; line-height: 1.4; color: var(--soft); border-top: 1px solid var(--line); padding-top: 6px; }
+.legend .fora b { color: var(--fg); font-weight: 600; }
+#legbtn { display: none; background: var(--panel); color: var(--fg); border: 1px solid var(--line); padding: 7px 12px; font-size: 13px; }
 .sw { width: 12px; height: 12px; border-radius: 3px; flex: none; }
 .dock {
   position: fixed; left: 0; right: 0; bottom: 0;
@@ -75,7 +81,10 @@ input[type=range] { width: 100%; accent-color: var(--green); }
 .msg { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--soft); font-size: 14px; }
 #det { display: none; background: transparent; color: var(--fg); border: 1px solid var(--line); padding: 8px 12px; margin-left: auto; }
 @media (max-width: 760px) {
-  .legend { display: none; }
+  #legbtn { display: block; }
+  .legend { display: none; max-height: 58vh; overflow-y: auto; }
+  .legwrap.aberta .legend { display: flex; width: min(300px, 82vw); box-sizing: border-box; }
+  .legwrap { max-width: none; }
   .panel { grid-template-columns: minmax(0, 1fr); padding: 10px 12px; gap: 6px; }
   .row { gap: 8px; }
   #det { padding: 8px 10px; }
@@ -105,16 +114,30 @@ input[type=range] { width: 100%; accent-color: var(--green); }
     <span class="eyebrow">Almeida Sapata · Contrato C.E. 16-2026</span>
     <h1>Córrego Veloso em 4D/5D</h1>
   </div>
-  <div class="legend" aria-label="Legenda">
+  <div class="legwrap">
+  <button id="legbtn" type="button" aria-expanded="false" aria-controls="legend">Legenda</button>
+  <div class="legend" id="legend" aria-label="Legenda">
+    <b class="lg">Hoje</b>
     <span><i class="sw" style="background:#ECE7DD"></i>Edificações existentes (topografia R7)</span>
-    <span><i class="sw" style="background:var(--orange)"></i>Imóveis a demolir (item 1.8)</span>
-    <span><i class="sw" style="background:#A48A62"></i>Vala aberta / leito viário em terra</span>
-    <span><i class="sw" style="background:#A9ADA6"></i>Canal em concreto (item 2.1)</span>
-    <span><i class="sw" style="background:var(--water)"></i>Trecho de canal concluído</span>
-    <span><i class="sw" style="background:#2F3336;border:1px solid #666"></i>Pavimento do viário (item 4)</span>
-    <span><i class="sw" style="background:#9C9A92"></i>Solo grampeado da cabeceira (item 2.6)</span>
-    <span><i class="sw" style="background:#9AA19D"></i>Torre em estrutura (item 7.4)</span>
-    <span><i class="sw" style="background:var(--brand)"></i>Torre com fechamento (item 7.6)</span>
+    <span><i class="sw" style="background:#E8772E"></i>Imóveis a demolir (item 1.8)</span>
+    <b class="lg">Terraplenagem e contenção</b>
+    <span><i class="sw" style="background:#A48A62"></i>Escavação: vala e leito em terra (item 1.9)</span>
+    <span><i class="sw" style="background:#7E9A5E"></i>Talude gramado 1,5H:1V</span>
+    <span><i class="sw" style="background:#9C9A92"></i>Solo grampeado e concreto projetado, cabeceira 0–130 m (item 2.6)</span>
+    <b class="lg">Canal (item 2.1)</b>
+    <span><i class="sw" style="background:#A9ADA6"></i>Canal aberto: T01a–T02, T04, T05, T07</span>
+    <span><i class="sw" style="background:#6F7772"></i>Galeria fechada sob a via: T03, T06, T08</span>
+    <span><i class="sw" style="background:#3F8C93"></i>Água no trecho concluído</span>
+    <span><i class="sw" style="background:#2E7D4F"></i>Guarda-corpo do canal aberto</span>
+    <b class="lg">Viário (itens 4 e 5)</b>
+    <span><i class="sw" style="background:#2F3336;border:1px solid #666"></i>Pavimento asfáltico</span>
+    <span><i class="sw" style="background:#C8C4BA"></i>Calçada e guia</span>
+    <b class="lg">Conjunto Rodoanel (itens 6 e 7)</b>
+    <span><i class="sw" style="background:#B4C08E"></i>Plataforma do lote (item 6)</span>
+    <span><i class="sw" style="background:#9DA19C"></i>Torre em estrutura (item 7.4)</span>
+    <span><i class="sw" style="background:#F1EFEA"></i>Torre com fechamento (item 7.6)</span>
+    <p class="fora"><b>Fora da maquete:</b> rocha a montante (prancha DES001), barreira New Jersey (item 5.1), contenção do lote da torre (item 6.2), microdrenagem (itens 2.2 a 2.5), esgoto (item 3), ruas do entorno e trechos T09–T10.</p>
+  </div>
   </div>
 </div>
 
@@ -186,6 +209,7 @@ const cHot = new THREE.Color('#E8772E'), cEstr = new THREE.Color('#9DA19C');
 const M_SOLO = new THREE.MeshStandardMaterial({ color: '#A48A62', roughness: 0.95 });
 const M_LARANJA = new THREE.MeshStandardMaterial({ color: '#E8772E', roughness: 0.85 });
 const M_ESTR = new THREE.MeshStandardMaterial({ color: '#9DA19C', roughness: 0.8 });
+const M_GAL = new THREE.MeshStandardMaterial({ color: '#6F7772', roughness: 0.85 });  // galeria fechada sob a via
 // trechos do modelo Civil 3D aprovado (estacas em m a partir de montante); o item 2.1 do contrato soma 1.043 m no quadro
 const TRECHOS = [["T01a",0,130,2.5,2.5,"aberto",false],["T01b",130,327,2.5,2.5,"aberto",true],["T02",327,366,3.5,2.5,"aberto",true],
   ["T03",366,473,3.5,2.5,"fechado",true],["T04",473,512,3.5,2.5,"aberto",true],["T05",512,640,4.5,2.0,"aberto",true],
@@ -197,6 +221,8 @@ function guarda(o) { for (const m of malhas(o)) if (!m.userData.mat0) m.userData
 function pinta(o, mat) { for (const m of malhas(o)) m.material = mat || m.userData.mat0; }
 function mostra(nome, v) { if (N[nome]) N[nome].visible = v; }
 
+const legbtn = document.getElementById('legbtn');
+legbtn.addEventListener('click', () => { const w = legbtn.parentElement; const ab = w.classList.toggle('aberta'); legbtn.setAttribute('aria-expanded', String(ab)); legbtn.textContent = ab ? 'Fechar legenda' : 'Legenda'; });
 const dock = document.querySelector('.dock'), panel = document.getElementById('panel');
 function resize() {
   const w = app.clientWidth, h = app.clientHeight;
@@ -286,7 +312,7 @@ function apply(t) {
   });
   TRECHOS.forEach(([nome, , fim, , , tipo]) => {
     const pronto = can * QUADRO >= fim - 1e-6;  // trecho concluido quando o avanco do item 2.1 passa do fim dele
-    mostra('Canal_' + nome, !hoje); pinta(N['Canal_' + nome], pronto ? null : M_SOLO);  // antes: vala aberta em terra
+    mostra('Canal_' + nome, !hoje); pinta(N['Canal_' + nome], pronto ? (tipo === 'fechado' ? M_GAL : null) : M_SOLO);  // antes: vala aberta em terra
     mostra('Agua_' + nome, !hoje && pronto && tipo === 'aberto');
     mostra('GuardaCorpo_' + nome, !hoje && pronto);
   });
@@ -338,7 +364,7 @@ function onModel(g) {
   floors.sort(byName); rem.sort(byName);
   // sem textura, o verde liso satura no three.js: tom de grama mais contido
   for (const nome of ['Terreno', 'Terreno_hoje', 'Taludes', 'Lote_Rodoanel'])
-    for (const m of malhas(N[nome])) if (m.userData.mat0 && m.userData.mat0.color) { m.userData.mat0.color.set(nome === 'Taludes' ? '#7E9A5E' : '#8AA06A'); m.userData.mat0.roughness = 0.95; }
+    for (const m of malhas(N[nome])) if (m.userData.mat0 && m.userData.mat0.color) { m.userData.mat0.color.set(nome === 'Taludes' ? '#7E9A5E' : nome === 'Lote_Rodoanel' ? '#B4C08E' : '#8AA06A'); m.userData.mat0.roughness = 0.95; }
   scene.add(root);
   // enquadramento pelo terreno (objetos de marcacao vazios, como a agua das galerias, ficam fora da caixa)
   const box = new THREE.Box3().setFromObject(N['Terreno_hoje'] || N['Terreno'] || root);
