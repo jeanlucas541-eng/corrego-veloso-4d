@@ -127,6 +127,7 @@ input[type=range] { width: 100%; accent-color: var(--green); }
     <span><i class="sw" style="background:#A48A62"></i>Escavação: vala e leito em terra (item 1.9)</span>
     <span><i class="sw" style="background:#7E9A5E"></i>Talude gramado 1,5H:1V</span>
     <span><i class="sw" style="background:#9C9A92"></i>Solo grampeado e concreto projetado, cabeceira 0–130 m (item 2.6)</span>
+    <span><i class="sw" style="background:#B9B2A3"></i>Muro de arrimo na divisa do lote da torre (item 6.2)</span>
     <b class="lg">Canal (item 2.1)</b>
     <span><i class="sw" style="background:#A9ADA6"></i>Canal aberto: T01a–T02, T04, T05, T07</span>
     <span><i class="sw" style="background:#6F7772"></i>Galeria fechada sob a via: T03, T06, T08</span>
@@ -139,7 +140,7 @@ input[type=range] { width: 100%; accent-color: var(--green); }
     <span><i class="sw" style="background:#B4C08E"></i>Plataforma do lote (item 6)</span>
     <span><i class="sw" style="background:#9DA19C"></i>Torre em estrutura (item 7.4)</span>
     <span><i class="sw" style="background:#F1EFEA"></i>Torre com fechamento (item 7.6)</span>
-    <p class="fora"><b>Fora da maquete:</b> rocha a montante (prancha DES001), barreira New Jersey (item 5.1), contenção do lote da torre (item 6.2), microdrenagem (itens 2.2 a 2.5), esgoto (item 3), ruas do entorno e trechos T09–T10.</p>
+    <p class="fora"><b>Fora da maquete:</b> rocha a montante (prancha DES001), barreira New Jersey (item 5.1), estacas dos muros do lote (item 6.2), microdrenagem (itens 2.2 a 2.5), esgoto (item 3), ruas do entorno e trechos T09–T10.</p>
   </div>
   </div>
 </div>
@@ -223,6 +224,7 @@ function malhas(o) { const r = []; if (o) o.traverse((m) => { if (m.isMesh) r.pu
 function guarda(o) { for (const m of malhas(o)) if (!m.userData.mat0) m.userData.mat0 = m.material; }
 function pinta(o, mat) { for (const m of malhas(o)) m.material = mat || m.userData.mat0; }
 function mostra(nome, v) { if (N[nome]) N[nome].visible = v; }
+window.__vis = (nome) => (N[nome] ? N[nome].visible : null);  // conferencia automatica (teste-muros.mjs)
 
 const legbtn = document.getElementById('legbtn');
 legbtn.addEventListener('click', () => { const w = legbtn.parentElement; const ab = w.classList.toggle('aberta'); legbtn.setAttribute('aria-expanded', String(ab)); legbtn.textContent = ab ? 'Fechar legenda' : 'Legenda'; });
@@ -326,6 +328,8 @@ function apply(t) {
   const cont = cum('2.6.', t);
   mostra('Faces_grampeadas', !hoje); pinta(N['Faces_grampeadas'], cont >= 0.999 ? null : M_SOLO);
   mostra('Grampos', !hoje && cont > 0);
+  // muro de arrimo na divisa do lote da torre (item 6.2): aparece quando o item comeca
+  mostra('Muros_lote', cum('6.2.', t) > 0);
   for (const nome of ['Faixas', 'Postes', 'Carros', 'Arvores']) mostra(nome, pavim);
   mostra('Lote_Rodoanel', cum('6.', t) > 0 || est > 0);
   const nEst = Math.round(est * floors.length), nFech = Math.round(fech * floors.length);
@@ -356,7 +360,7 @@ function onModel(g) {
     const n = o.name;
     if (n.startsWith('Casas_remocao')) rem.push(o);
     if (n.startsWith('Torre_Pav')) floors.push(o);
-    if (/^(Casas_|Canal_|Torre_Pav|Taludes|Avenidas|Faces_grampeadas|Grampos)/.test(n)) pick.push(o);
+    if (/^(Casas_|Canal_|Torre_Pav|Taludes|Avenidas|Faces_grampeadas|Grampos|Muros_lote)/.test(n)) pick.push(o);
   }
   root.traverse((o) => {
     if (!o.isMesh) return;
@@ -419,6 +423,8 @@ renderer.domElement.addEventListener('pointerup', (e) => {
     h = '<h2>Avenidas marginais</h2>Pista de 6,0 m de cada lado, calçada de 2,5 m e taludes 1,5H:1V até o terreno. Perfil com rampas constantes (máximo 7,45 %). Item 4 do cronograma: meses 26 a 33.';
   } else if (n === 'Faces_grampeadas' || n === 'Grampos') {
     h = '<h2>Solo grampeado da cabeceira</h2>Estacas 0 a 130 m. 1.501 grampos Ø16 mm, 8,0 m, 20° abaixo da horizontal, malha de 1,0 × 1,0 m; face em concreto projetado, inclinação 1,35H:1V e altura de até 11,3 m. Parâmetros do anteprojeto de contenção (folha 1.23), sem dimensionamento. Item 2.6 do cronograma: meses 12 a 25.';
+  } else if (n === 'Muros_lote') {
+    h = '<h2>Muro de arrimo na divisa do lote</h2>Onde o talude da plataforma da torre (cota 757,00) sairia do lote, o desnível fica num muro na divisa: 4 trechos, 177 m, desnível de 0,2 a 11,2 m no modelo. O orçamento do edital prevê 4 muros em concreto armado sobre estacas hélice contínua Ø30 cm, 166 m. Geometria conceitual, sem dimensionamento. Item 6.2 do cronograma: meses 7 a 10.';
   } else if (n.startsWith('Torre_Pav')) {
     h = '<h2>Conjunto Rodoanel</h2>Pavimento ' + parseInt(n.slice(9), 10) + ' de 20. Item 7.4 do cronograma: meses 8 a 32.';
   } else if (n.startsWith('Casas_remocao')) {
@@ -443,5 +449,4 @@ resize();
 requestAnimationFrame(tick);
 </script>
 
-</body>
-</html>
+</body></html>
