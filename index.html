@@ -83,8 +83,11 @@ input[type=range] { width: 100%; accent-color: var(--green); }
 @media (max-width: 760px) {
   #legbtn { display: block; }
   .legend { display: none; max-height: 58vh; overflow-y: auto; }
-  .legwrap.aberta .legend { display: flex; width: min(300px, 82vw); box-sizing: border-box; }
-  .legwrap { max-width: none; }
+  .legwrap.aberta .legend { display: flex; position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(64px + env(safe-area-inset-top, 0px));
+    width: min(320px, calc(100vw - 32px)); box-sizing: border-box; max-height: calc(100vh - 64px - 160px - env(safe-area-inset-top, 0px)); }
+  .legwrap { max-width: none; flex: none; }
+  .brand { min-width: 0; flex: 1; }
+  #legbtn { white-space: nowrap; }
   .panel { grid-template-columns: minmax(0, 1fr); padding: 10px 12px; gap: 6px; }
   .row { gap: 8px; }
   #det { padding: 8px 10px; }
