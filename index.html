@@ -137,6 +137,7 @@ input[type=range] { width: 100%; accent-color: var(--green); }
     <span><i class="sw" style="background:#2F3336;border:1px solid #666"></i>Pavimento asfáltico</span>
     <span><i class="sw" style="background:#C8C4BA"></i>Calçada e guia</span>
     <b class="lg">Conjunto Rodoanel (itens 6 e 7)</b>
+    <span><i class="sw" style="background:#2F3336"></i>Estacionamento do condomínio, rampa de 757,60 a 765,00 (6.1)</span>
     <span><i class="sw" style="background:#B4C08E"></i>Plataforma do lote (item 6)</span>
     <span><i class="sw" style="background:#9DA19C"></i>Torre em estrutura (item 7.4)</span>
     <span><i class="sw" style="background:#F1EFEA"></i>Torre com fechamento (item 7.6)</span>
@@ -307,7 +308,8 @@ function apply(t) {
   // 4D: cada servico comanda seus objetos (modelo Civil 3D aprovado)
   const proj = cum('1.2.', t), dem = cum('1.8.', t), can = cum('2.1.', t), pav = cum('4.', t);
   const est = cum('7.4.', t), fech = cum('7.6.', t);
-  const hoje = can <= 0 && est <= 0 && pav <= 0;
+  const terl = cum('6.1.', t);  // terraplenagem do lote da torre (meses 6 a 9)
+  const hoje = can <= 0 && est <= 0 && pav <= 0 && terl <= 0;
   // antes da obra: terreno original; depois: superficie de projeto (canal, avenidas e plataforma ja escavados)
   mostra('Terreno_hoje', hoje); mostra('Terreno', !hoje);
   rem.forEach((o, i) => {
@@ -331,7 +333,9 @@ function apply(t) {
   // muro de arrimo na divisa do lote da torre (item 6.2): aparece quando o item comeca
   mostra('Muros_lote', cum('6.2.', t) > 0);
   for (const nome of ['Faixas', 'Postes', 'Carros', 'Arvores']) mostra(nome, pavim);
-  mostra('Lote_Rodoanel', cum('6.', t) > 0 || est > 0);
+  mostra('Lote_Rodoanel', !hoje); pinta(N['Lote_Rodoanel'], terl >= 0.999 ? null : M_SOLO);
+  // estacionamento do condominio: leito em terra durante a terraplenagem, asfalto depois
+  mostra('Estacionamento_lote', !hoje); pinta(N['Estacionamento_lote'], terl >= 0.999 ? null : M_SOLO);
   const nEst = Math.round(est * floors.length), nFech = Math.round(fech * floors.length);
   floors.forEach((o, i) => { o.visible = i < nEst; pinta(o, i < nFech ? null : M_ESTR); });
   mostra('Torre_Cobertura', est >= 0.999); mostra('Arvores_lote', fech >= 0.999);
@@ -360,7 +364,7 @@ function onModel(g) {
     const n = o.name;
     if (n.startsWith('Casas_remocao')) rem.push(o);
     if (n.startsWith('Torre_Pav')) floors.push(o);
-    if (/^(Casas_|Canal_|Torre_Pav|Taludes|Avenidas|Faces_grampeadas|Grampos|Muros_lote)/.test(n)) pick.push(o);
+    if (/^(Casas_|Canal_|Torre_Pav|Taludes|Avenidas|Faces_grampeadas|Grampos|Muros_lote|Estacionamento_lote|Lote_Rodoanel)/.test(n)) pick.push(o);
   }
   root.traverse((o) => {
     if (!o.isMesh) return;
@@ -424,7 +428,11 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   } else if (n === 'Faces_grampeadas' || n === 'Grampos') {
     h = '<h2>Solo grampeado da cabeceira</h2>Estacas 0 a 130 m. 1.501 grampos Ø16 mm, 8,0 m, 20° abaixo da horizontal, malha de 1,0 × 1,0 m; face em concreto projetado, inclinação 1,35H:1V e altura de até 11,3 m. Parâmetros do anteprojeto de contenção (folha 1.23), sem dimensionamento. Item 2.6 do cronograma: meses 12 a 25.';
   } else if (n === 'Muros_lote') {
-    h = '<h2>Muro de arrimo na divisa do lote</h2>Onde o talude da plataforma da torre (cota 757,00) sairia do lote, o desnível fica num muro na divisa: 4 trechos, 177 m, desnível de 0,2 a 11,2 m no modelo. O orçamento do edital prevê 4 muros em concreto armado sobre estacas hélice contínua Ø30 cm, 166 m. Geometria conceitual, sem dimensionamento. Item 6.2 do cronograma: meses 7 a 10.';
+    h = '<h2>Muro de arrimo na divisa do lote</h2>Onde a terraplenagem do lote encontra a divisa fora do terreno vizinho, o desnível fica num muro: 304 m com mais de 1,15 m de altura, até 9,5 m, no modelo. O orçamento do edital prevê 4 muros em concreto armado sobre estacas hélice contínua Ø30 cm, 166 m. Geometria conceitual, sem dimensionamento. Item 6.2 do cronograma: meses 7 a 10.';
+  } else if (n === 'Estacionamento_lote') {
+    h = '<h2>Estacionamento do condomínio</h2>Rampa de 757,60 a 765,00, com as cotas de projeto da folha 1.28 do edital (anteprojeto de terraplenagem). Leito em terra durante a terraplenagem do lote (item 6.1, meses 6 a 9).';
+  } else if (n === 'Lote_Rodoanel') {
+    h = '<h2>Terraplenagem do lote</h2>Platô nas cotas da folha 1.28 (756,25 a 757,00 junto aos prédios) e taludes de 1V:1H no corte e 1V:1,5H no aterro até o terreno ou até a divisa. No modelo: corte de 9.328 m³ e aterro de 1.019 m³; as notas da folha 1.28 indicam 10.996 e 1.241 m³. Item 6.1 do cronograma: meses 6 a 9.';
   } else if (n.startsWith('Torre_Pav')) {
     h = '<h2>Conjunto Rodoanel</h2>Pavimento ' + parseInt(n.slice(9), 10) + ' de 20. Item 7.4 do cronograma: meses 8 a 32.';
   } else if (n.startsWith('Casas_remocao')) {
