@@ -371,6 +371,7 @@ function apply(t) {
   mostra('Muros_lote', cum('6.2.', t) > 0);
   // saida do canal (fim de T10): em terra ate o canal ficar pronto
   mostra('Saida_canal', !hoje); pinta(N['Saida_canal'], can >= 0.999 ? null : M_SOLO);
+  mostra('Agua_saida', !hoje && can >= 0.999);
   for (const nome of ['Faixas', 'Postes', 'Carros', 'Arvores']) mostra(nome, pavim);
   mostra('Lote_Rodoanel', !hoje); pinta(N['Lote_Rodoanel'], terl >= 0.999 ? null : M_SOLO);
   // estacionamento do condominio: leito em terra durante a terraplenagem, asfalto depois
@@ -752,9 +753,9 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   } else if (n === 'Muros_lote') {
     h = '<h2>Muro de arrimo na divisa do lote</h2>Onde a terraplenagem do lote encontra a divisa fora do terreno vizinho, o desnível fica num muro: 260 m com mais de 1,15 m de altura, até 8,0 m, no modelo. O orçamento do edital prevê 4 muros em concreto armado sobre estacas hélice contínua Ø30 cm, 166 m. Geometria conceitual, sem dimensionamento. Item 6.2 do cronograma: meses 7 a 10.';
   } else if (n === 'Ligacoes_viarias') {
-    h = '<h2>Ligações com as ruas existentes</h2>Pela folha 1.26 do edital: Rua Nova Aliança (binário de 8,00 m com ilha, alinhamentos 100 e 200, que viram as marginais norte e sul), Rua Onix (6,00 m), Rua Gomes (5,00 m), Rua Buritu (6,00 m) e Rua Ervália (7,00 m, cruzando sobre a galeria T10 no fim das marginais). Passeios de 2,00 m. Traçado digitalizado da planta (±1,5 m), apoiado no terreno; greide não projetado. Item 4 do cronograma.';
+    h = '<h2>Ligações com as ruas existentes</h2>Pela folha 1.26 do edital: Rua Nova Aliança (binário de 8,00 m com ilha, alinhamentos 100 e 200, que viram as marginais norte e sul), Rua Onix (6,00 m), Rua Gomes (5,00 m), Rua Buritu (6,00 m) e Rua Ervália (7,00 m, cruzando sobre a galeria T10 no fim das marginais). Passeios de 2,00 m. O alinhamento 200 atravessa sobre a galeria T03 e chega à marginal sul; o 100 segue como marginal norte. Traçado digitalizado da planta (±1,5 m), greide conceitual do Civil 3D com taludes até o terreno. Item 4 do cronograma.';
   } else if (n === 'Saida_canal') {
-    h = '<h2>Saída do canal</h2>Fim da galeria T10 (estaca 53+14 do edital): muro de testa com o vão livre da galeria (4,5 × 2,0 m), alas e dissipador de pedras para o córrego receptor; alas e dissipador são aproximação conceitual, sem cotagem no edital. Posição pela folha 1.26 do edital; depois de 835 m o terreno é estimado pelas seções-tipo da folha 1.27, sem levantamento. Item 2.1 do cronograma.';
+    h = '<h2>Saída do canal</h2>Fim da galeria T10 (estaca 53+14 do edital): muro de testa com o vão livre da galeria (4,5 × 2,0 m), alas, dissipador de pedras e bacia escavada até o leito do córrego receptor; alas e dissipador são aproximação conceitual, sem cotagem no edital. Posição pela folha 1.26 do edital; depois de 835 m o terreno é estimado pelas seções-tipo da folha 1.27, sem levantamento. Item 2.1 do cronograma.';
   } else if (n === 'Travessias') {
     h = '<h2>Travessias sobre o canal</h2>Rua Gomes (trecho T06, 18 m) e Rua Buritu (T08, 20 m): o canal passa fechado sob a rua, que liga as duas avenidas marginais. Pista de 5,0 m (Gomes) e 6,0 m (Buritu) com passeios de 2,0 m. Posição e larguras pela folha 1.26 do edital (anteprojeto de pavimentação). Item 4 do cronograma.';
   } else if (n === 'Estacionamento_lote') {
@@ -787,4 +788,5 @@ resize();
 requestAnimationFrame(tick);
 </script>
 
-</body></html>
+</body>
+</html>
