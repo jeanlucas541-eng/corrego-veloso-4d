@@ -150,7 +150,8 @@ input[type=range] { width: 100%; accent-color: var(--green); }
     <span><i class="sw" style="background:#B9B2A3"></i>Muro de arrimo na divisa do lote da torre (item 6.2)</span>
     <b class="lg">Canal (item 2.1)</b>
     <span><i class="sw" style="background:#A9ADA6"></i>Canal aberto: T01a–T02 (sem avenida), T02b, T04, T05, T07, T09</span>
-    <span><i class="sw" style="background:#6F7772"></i>Galeria fechada: T03 (início das avenidas) e travessias T06 (Rua Gomes) e T08 (Rua Buritu)</span>
+    <span><i class="sw" style="background:#7D7A72"></i>Saída: muro de testa, alas e dissipador de pedras (fim de T10)</span>
+    <span><i class="sw" style="background:#6F7772"></i>Galeria fechada: T03 (início das avenidas), travessias T06 (Rua Gomes) e T08 (Rua Buritu) e T10 (da Rua Ervália à saída)</span>
     <span><i class="sw" style="background:#3F8C93"></i>Água no trecho concluído</span>
     <span><i class="sw" style="background:#2E7D4F"></i>Guarda-corpo do canal aberto</span>
     <b class="lg">Viário (itens 4 e 5)</b>
@@ -161,7 +162,7 @@ input[type=range] { width: 100%; accent-color: var(--green); }
     <span><i class="sw" style="background:#B4C08E"></i>Plataforma do lote (item 6)</span>
     <span><i class="sw" style="background:#9DA19C"></i>Torre em estrutura (item 7.4)</span>
     <span><i class="sw" style="background:#F1EFEA"></i>Torre com fechamento (item 7.6)</span>
-    <p class="fora"><b>Fora da maquete:</b> rocha a montante (prancha DES001), barreira New Jersey (item 5.1), estacas dos muros do lote (item 6.2), microdrenagem (itens 2.2 a 2.5), esgoto (item 3), ruas do entorno e o trecho final, da Rua Ervália à saída (fim de T09 e T10, sem topografia).</p>
+    <p class="fora"><b>Fora da maquete:</b> rocha a montante (prancha DES001), barreira New Jersey (item 5.1), estacas dos muros do lote (item 6.2), microdrenagem (itens 2.2 a 2.5), esgoto (item 3), ruas do entorno e as casas do trecho final. Depois de 835 m o terreno é estimado (sem levantamento topográfico; seções-tipo da folha 1.27).</p>
   </div>
   </div>
 </div>
@@ -252,7 +253,7 @@ const M_GAL = new THREE.MeshStandardMaterial({ color: '#6F7772', roughness: 0.85
 const TRECHOS = [["T01a",0,130,2.5,2.5,"aberto",false],["T01b",130,314,2.5,2.5,"aberto",false],["T02",314,345,3.5,2.5,"aberto",false],
   ["T02b",345,357,3.5,2.5,"aberto",true],["T03",357,454,3.5,2.5,"fechado",true],["T04",454,493,3.5,2.5,"aberto",true],
   ["T05",493,637,4.5,2.0,"aberto",true],["T06",637,655,4.5,2.0,"fechado",true],["T07",655,770,4.5,2.0,"aberto",true],
-  ["T08",770,790,4.5,2.0,"fechado",true],["T09",790,834.9,4.5,2.0,"aberto",true]];
+  ["T08",770,790,4.5,2.0,"fechado",true],["T09",790,950,4.5,2.0,"aberto",true],["T10",950,1057.2,4.5,2.0,"fechado",false]];
 const QUADRO = 1043;
 // cada objeto pode virar Group com varias malhas (uma por material): guardar os materiais originais
 function malhas(o) { const r = []; if (o) o.traverse((m) => { if (m.isMesh) r.push(m); }); return r; }
@@ -367,6 +368,8 @@ function apply(t) {
   mostra('Grampos', !hoje && cont > 0);
   // muro de arrimo na divisa do lote da torre (item 6.2): aparece quando o item comeca
   mostra('Muros_lote', cum('6.2.', t) > 0);
+  // saida do canal (fim de T10): em terra ate o canal ficar pronto
+  mostra('Saida_canal', !hoje); pinta(N['Saida_canal'], can >= 0.999 ? null : M_SOLO);
   for (const nome of ['Faixas', 'Postes', 'Carros', 'Arvores']) mostra(nome, pavim);
   mostra('Lote_Rodoanel', !hoje); pinta(N['Lote_Rodoanel'], terl >= 0.999 ? null : M_SOLO);
   // estacionamento do condominio: leito em terra durante a terraplenagem, asfalto depois
@@ -399,7 +402,7 @@ function onModel(g) {
     const n = o.name;
     if (n.startsWith('Casas_remocao')) rem.push(o);
     if (n.startsWith('Torre_Pav')) floors.push(o);
-    if (/^(Casas_|Canal_|Torre_Pav|Taludes|Avenidas|Faces_grampeadas|Grampos|Muros_lote|Estacionamento_lote|Lote_Rodoanel|Travessias)/.test(n)) pick.push(o);
+    if (/^(Casas_|Canal_|Torre_Pav|Taludes|Avenidas|Faces_grampeadas|Grampos|Muros_lote|Estacionamento_lote|Lote_Rodoanel|Travessias|Saida_canal)/.test(n)) pick.push(o);
   }
   root.traverse((o) => {
     if (!o.isMesh) return;
@@ -555,7 +558,7 @@ function defineVistas() {
   const crus = (trav.length ? trav : TRECHOS.filter((t) => t[5] === 'fechado').map((t) => 'Canal_' + t[0])).map((n) => boxOf([n])).filter(Boolean);
   let kc = -1;
   if (crus.length) out.push({ nome: 'Travessias', pose: () => { kc = (kc + 1) % crus.length; return posePara(crus[kc], V3().crossVectors(flow, UP), 32, 1.6); } });
-  const jus = boxOf(['Canal_T08', 'Canal_T09']);
+  const jus = boxOf(['Canal_T09', 'Canal_T10', 'Saida_canal']);
   if (jus) out.push({ nome: 'Jusante', pose: () => posePara(jus, giraY(flow, -35), 24, 0.85) });
   return out;
 }
@@ -747,6 +750,8 @@ renderer.domElement.addEventListener('pointerup', (e) => {
     h = '<h2>Solo grampeado da cabeceira</h2>Estacas 0 a 130 m. 1.501 grampos Ø16 mm, 8,0 m, 20° abaixo da horizontal, malha de 1,0 × 1,0 m; face em concreto projetado, inclinação 1,35H:1V e altura de até 11,3 m. Parâmetros do anteprojeto de contenção (folha 1.23), sem dimensionamento. Item 2.6 do cronograma: meses 12 a 25.';
   } else if (n === 'Muros_lote') {
     h = '<h2>Muro de arrimo na divisa do lote</h2>Onde a terraplenagem do lote encontra a divisa fora do terreno vizinho, o desnível fica num muro: 260 m com mais de 1,15 m de altura, até 8,0 m, no modelo. O orçamento do edital prevê 4 muros em concreto armado sobre estacas hélice contínua Ø30 cm, 166 m. Geometria conceitual, sem dimensionamento. Item 6.2 do cronograma: meses 7 a 10.';
+  } else if (n === 'Saida_canal') {
+    h = '<h2>Saída do canal</h2>Fim da galeria T10 (estaca 53+14 do edital): muro de testa com alas e dissipador de pedras para o córrego receptor. Posição pela folha 1.26 do edital; depois de 835 m o terreno é estimado pelas seções-tipo da folha 1.27, sem levantamento. Item 2.1 do cronograma.';
   } else if (n === 'Travessias') {
     h = '<h2>Travessias sobre o canal</h2>Rua Gomes (trecho T06, 18 m) e Rua Buritu (T08, 20 m): o canal passa fechado sob a rua, que liga as duas avenidas marginais. Posição pela folha 1.26 do edital (anteprojeto de pavimentação). Item 4 do cronograma.';
   } else if (n === 'Estacionamento_lote') {
