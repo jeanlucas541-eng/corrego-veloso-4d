@@ -149,7 +149,7 @@ input[type=range] { width: 100%; accent-color: var(--green); }
     <span><i class="sw" style="background:#9C9A92"></i>Solo grampeado e concreto projetado, cabeceira 0–130 m (item 2.6)</span>
     <span><i class="sw" style="background:#B9B2A3"></i>Muro de arrimo na divisa do lote da torre (item 6.2)</span>
     <b class="lg">Canal (item 2.1)</b>
-    <span><i class="sw" style="background:#A9ADA6"></i>Canal aberto: T01a–T02 (sem avenida), T04, T05, T07, T09</span>
+    <span><i class="sw" style="background:#A9ADA6"></i>Canal aberto: T01a–T02 (sem avenida), T02b, T04, T05, T07, T09</span>
     <span><i class="sw" style="background:#6F7772"></i>Galeria fechada: T03 (início das avenidas) e travessias T06 (Rua Gomes) e T08 (Rua Buritu)</span>
     <span><i class="sw" style="background:#3F8C93"></i>Água no trecho concluído</span>
     <span><i class="sw" style="background:#2E7D4F"></i>Guarda-corpo do canal aberto</span>
@@ -247,12 +247,12 @@ const M_LARANJA = new THREE.MeshStandardMaterial({ color: '#E8772E', roughness: 
 const M_ESTR = new THREE.MeshStandardMaterial({ color: '#9DA19C', roughness: 0.8 });
 const M_GAL = new THREE.MeshStandardMaterial({ color: '#6F7772', roughness: 0.85 });  // galeria fechada sob a via
 // trechos do modelo Civil 3D aprovado (estacas em m a partir de montante); o item 2.1 do contrato soma 1.043 m no quadro
-// trechos conforme as folhas 1.23, 1.24 e 1.26 do edital: avenidas desde a galeria T03 (Rua Alianca);
+// trechos medidos na folha 1.26 georreferenciada (civil3d\viario\compara_planta_1_26.py): avenidas desde a Rua Alianca;
 // T06 e T08 sao as travessias da Rua Gomes e da Rua Buritu; T09 vai alem da topografia (ate a Rua Ervalia)
-const TRECHOS = [["T01a",0,130,2.5,2.5,"aberto",false],["T01b",130,327,2.5,2.5,"aberto",false],["T02",327,366,3.5,2.5,"aberto",false],
-  ["T03",366,473,3.5,2.5,"fechado",true],["T04",473,512,3.5,2.5,"aberto",true],["T05",512,653,4.5,2.0,"aberto",true],
-  ["T06",653,672,4.5,2.0,"fechado",true],["T07",672,787,4.5,2.0,"aberto",true],["T08",787,807,4.5,2.0,"fechado",true],
-  ["T09",807,834.9,4.5,2.0,"aberto",true]];
+const TRECHOS = [["T01a",0,130,2.5,2.5,"aberto",false],["T01b",130,314,2.5,2.5,"aberto",false],["T02",314,345,3.5,2.5,"aberto",false],
+  ["T02b",345,357,3.5,2.5,"aberto",true],["T03",357,454,3.5,2.5,"fechado",true],["T04",454,493,3.5,2.5,"aberto",true],
+  ["T05",493,637,4.5,2.0,"aberto",true],["T06",637,655,4.5,2.0,"fechado",true],["T07",655,770,4.5,2.0,"aberto",true],
+  ["T08",770,790,4.5,2.0,"fechado",true],["T09",790,834.9,4.5,2.0,"aberto",true]];
 const QUADRO = 1043;
 // cada objeto pode virar Group com varias malhas (uma por material): guardar os materiais originais
 function malhas(o) { const r = []; if (o) o.traverse((m) => { if (m.isMesh) r.push(m); }); return r; }
@@ -454,7 +454,7 @@ const EYE = 1.7, VOO_DUR = 55;  // altura dos olhos (m); duracao do sobrevoo (s)
 let anim = null, voo = null, andar = null, caminho = null, vistas = [], flow = V3(1, 0, 0), siteC = V3(), siteBox = new THREE.Box3(), dicaT = 0, lookNow = V3();
 let vooDur = VOO_DUR;
 const keys = {}; const joy = { x: 0, y: 0, id: null }; let lookId = null, lookXY = null;
-const GROUND = ['Terreno', 'Terreno_hoje', 'Taludes', 'Avenidas', 'Calcadas', 'Estacionamento_lote', 'Lote_Rodoanel', 'Canal_T01a', 'Canal_T01b', 'Canal_T02', 'Canal_T04', 'Canal_T05', 'Canal_T07', 'Canal_T09', 'Travessias'];
+const GROUND = ['Terreno', 'Terreno_hoje', 'Taludes', 'Avenidas', 'Calcadas', 'Estacionamento_lote', 'Lote_Rodoanel', 'Canal_T01a', 'Canal_T01b', 'Canal_T02', 'Canal_T02b', 'Canal_T04', 'Canal_T05', 'Canal_T07', 'Canal_T09', 'Travessias'];
 const boxOf = (nomes) => { const b = new THREE.Box3(); let ok = false; for (const n of nomes) if (N[n]) { b.union(new THREE.Box3().setFromObject(N[n])); ok = true; } return ok ? b : null; };
 
 function mostraDica(txt, ms = 0) {
@@ -748,7 +748,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   } else if (n === 'Muros_lote') {
     h = '<h2>Muro de arrimo na divisa do lote</h2>Onde a terraplenagem do lote encontra a divisa fora do terreno vizinho, o desnível fica num muro: 260 m com mais de 1,15 m de altura, até 8,0 m, no modelo. O orçamento do edital prevê 4 muros em concreto armado sobre estacas hélice contínua Ø30 cm, 166 m. Geometria conceitual, sem dimensionamento. Item 6.2 do cronograma: meses 7 a 10.';
   } else if (n === 'Travessias') {
-    h = '<h2>Travessias sobre o canal</h2>Rua Gomes (trecho T06, 19 m) e Rua Buritu (T08, 20 m): o canal passa fechado sob a rua, que liga as duas avenidas marginais. Posição pela folha 1.26 do edital (anteprojeto de pavimentação). Item 4 do cronograma.';
+    h = '<h2>Travessias sobre o canal</h2>Rua Gomes (trecho T06, 18 m) e Rua Buritu (T08, 20 m): o canal passa fechado sob a rua, que liga as duas avenidas marginais. Posição pela folha 1.26 do edital (anteprojeto de pavimentação). Item 4 do cronograma.';
   } else if (n === 'Estacionamento_lote') {
     h = '<h2>Estacionamento do condomínio</h2>Rampa de 757,60 a 765,00, com as cotas de projeto da folha 1.28 do edital (anteprojeto de terraplenagem). Leito em terra durante a terraplenagem do lote (item 6.1, meses 6 a 9).';
   } else if (n === 'Lote_Rodoanel') {
