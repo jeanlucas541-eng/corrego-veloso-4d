@@ -44,6 +44,7 @@ canvas#cv3d { width: 100%; height: 100%; display: block; touch-action: none; }
 h1 { font-family: var(--display); font-size: clamp(18px, 3.2vw, 26px); margin: 0; line-height: 1.15; text-wrap: balance; }
 .legend { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--soft); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; pointer-events: auto; }
 .legend span { display: flex; align-items: center; gap: 8px; }
+.legend span.nota-leg { display: block; font-size: 11px; font-style: italic; opacity: 0.85; max-width: 300px; }
 .legwrap { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; pointer-events: auto; max-width: 330px; }
 .legend .lg { font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--green); font-weight: 600; margin-top: 4px; }
 .legend .lg:first-child { margin-top: 0; }
@@ -145,7 +146,7 @@ input[type=range] { width: 100%; accent-color: var(--green); }
     <span><i class="sw" style="background:#E8772E"></i>Imóveis a demolir (item 1.8)</span>
     <b class="lg">Terraplenagem e contenção</b>
     <span><i class="sw" style="background:#A48A62"></i>Escavação: vala e leito em terra (item 1.9)</span>
-    <span><i class="sw" style="background:#7E9A5E"></i>Talude gramado 1,5H:1V</span>
+    <span><i class="sw" style="background:#7E9A5E"></i>Talude gramado 1,5H:1V (grama quando o canal passa no trecho)</span>
     <span><i class="sw" style="background:#9C9A92"></i>Solo grampeado e concreto projetado, cabeceira 0–345 m, faixa em rocha da folha 1.23 até a Rua Nova Aliança (item 2.6)</span>
     <span><i class="sw" style="background:#B9B2A3"></i>Muro de arrimo na divisa do lote da torre (item 6.2)</span>
     <b class="lg">Canal (item 2.1)</b>
@@ -156,12 +157,15 @@ input[type=range] { width: 100%; accent-color: var(--green); }
     <span><i class="sw" style="background:#2E7D4F"></i>Guarda-corpo do canal aberto</span>
     <b class="lg">Viário (itens 4 e 5)</b>
     <span><i class="sw" style="background:#2F3336;border:1px solid #666"></i>Pavimento asfáltico: marginais, travessias e ligações com as ruas Nova Aliança, Onix, Gomes, Buritu e Ervália</span>
-    <span><i class="sw" style="background:#C8C4BA"></i>Calçada e guia</span>
+    <span><i class="sw" style="background:#A9A08C"></i>Base de brita da pista (4.1 e 4.2), antes do rolamento (4.5 e 4.6)</span>
+    <span><i class="sw" style="background:#C8C4BA"></i>Guia e sarjeta (4.3) e calçada (5.2); faixas pintadas com a sinalização (5.4)</span>
+    <span class="nota-leg">Premissas de frente de obra (o CFF do edital dá só o avanço mensal de cada item): escavação (1.9), canal (2.1) e viário de jusante para montante, a partir da saída e da Rua Ervália; solo grampeado da cabeceira (2.6) por painéis, com a escavação descendo junto; muro do lote (6.2) ao longo da divisa</span>
     <b class="lg">Conjunto Rodoanel (itens 6 e 7)</b>
-    <span><i class="sw" style="background:#2F3336"></i>Estacionamento do condomínio, rampa de 757,60 a 765,00 (6.1)</span>
+    <span><i class="sw" style="background:#2F3336"></i>Estacionamento do condomínio, rampa de 757,60 a 765,00: leito em terra (6.1), base (4.2) e asfalto (4.6)</span>
     <span><i class="sw" style="background:#B4C08E"></i>Plataforma do lote (item 6)</span>
     <span><i class="sw" style="background:#9DA19C"></i>Torre em estrutura (item 7.4)</span>
     <span><i class="sw" style="background:#F1EFEA"></i>Torre com fechamento (item 7.6)</span>
+    <span class="nota-leg">Torre: altura proporcional ao avanço de 7.4 e fachada ao de 7.6 (interpolação conceitual até haver cronograma da estrutura); elevadores (7.5) nos meses 32 e 33</span>
     <p class="fora"><b>Fora da maquete:</b> rocha a montante (prancha DES001), barreira New Jersey (item 5.1), estacas dos muros do lote (item 6.2), microdrenagem (itens 2.2 a 2.5), esgoto (item 3), ruas do entorno e as casas do trecho final. Depois de 835 m o terreno é estimado (sem levantamento topográfico; seções-tipo da folha 1.27).</p>
   </div>
   </div>
@@ -247,6 +251,7 @@ const M_SOLO = new THREE.MeshStandardMaterial({ color: '#A48A62', roughness: 0.9
 const M_LARANJA = new THREE.MeshStandardMaterial({ color: '#E8772E', roughness: 0.85 });
 const M_ESTR = new THREE.MeshStandardMaterial({ color: '#9DA19C', roughness: 0.8 });
 const M_GAL = new THREE.MeshStandardMaterial({ color: '#6F7772', roughness: 0.85 });  // galeria fechada sob a via
+const M_BRITA = new THREE.MeshStandardMaterial({ color: '#A9A08C', roughness: 0.95 });  // base de brita graduada
 // trechos do modelo Civil 3D aprovado (estacas em m a partir de montante); o item 2.1 do contrato soma 1.043 m no quadro
 // trechos medidos na folha 1.26 georreferenciada (civil3d\viario\compara_planta_1_26.py): avenidas desde a Rua Alianca;
 // T06 e T08 sao as travessias da Rua Gomes e da Rua Buritu; T09 vai alem da topografia (ate a Rua Ervalia)
@@ -261,7 +266,179 @@ function guarda(o) { for (const m of malhas(o)) if (!m.userData.mat0) m.userData
 function pinta(o, mat) { for (const m of malhas(o)) m.material = mat || m.userData.mat0; }
 function mostra(nome, v) { if (N[nome]) N[nome].visible = v; }
 window.__vis = (nome) => (N[nome] ? N[nome].visible : null);  // conferencia automatica (teste-muros.mjs)
-window.__solo = (nome) => (N[nome] ? malhas(N[nome]).some((m) => m.material === M_SOLO) : null);  // trecho ainda em terra (teste-auditoria.mjs)
+// trecho ainda em terra (teste-auditoria.mjs); nas pecas com frente de obra: alguma parte ainda nao concluida
+window.__solo = (nome) => (N[nome] ? malhas(N[nome]).some((m) => m.material === M_SOLO || (m.userData.fase && FASE[m.userData.fase].uB.value > -1e8)) : null);
+
+// ---- frente de obra por estaca (4D do viario e do canal): de JUSANTE para MONTANTE, como se executa uma canalizacao
+// (a agua sempre tem por onde sair). O CFF do edital so da o avanco mensal de cada item; a distribuicao no espaco e
+// premissa: a frente sobe da Rua Ervalia (fim das avenidas) para a Rua Alianca (inicio).
+const VIAS = TRECHOS.filter((t) => t[6]);
+const VIAS_INI = Math.min(...VIAS.map((t) => t[1])), VIAS_FIM = Math.max(...VIAS.map((t) => t[2]));
+const FASE = {};  // chave -> { uA, uB (limites da 1a etapa e da etapa final; valor >= limite = feito), lo, hi (faixa da frente) }
+let EIXO = [];    // pontos do eixo do canal com estaca: { x, z, s }
+const carros = [];
+// frentes globais, em zonas exclusivas: terraplenagem do canal (1.9, jusante -> montante, de 345 m ate a saida), contencao da cabeceira (2.6,
+// por paineis de jusante para montante entre 0 e 345 m: ali a escavacao desce junto com o solo grampeado) e lote da torre (6.1)
+const G = { uT: { value: 1e9 }, uC: { value: 1e9 }, uCab: { value: 0 }, uL: { value: 0 }, uLB: { value: new THREE.Vector4(0, 0, -1, -1) } };
+function montaEixoEstacas() {
+  const ts = TRECHOS.filter((t) => N['Canal_' + t[0]]);
+  const cs = ts.map((t) => new THREE.Box3().setFromObject(N['Canal_' + t[0]]).getCenter(V3()));
+  EIXO = [];
+  ts.forEach((t, i) => {
+    const a = cs[Math.max(0, i - 1)], b = cs[Math.min(cs.length - 1, i + 1)];
+    const d = V3(b.x - a.x, 0, b.z - a.z).normalize();
+    const f = fatias(N['Canal_' + t[0]], d, Math.max(2, Math.round((t[2] - t[1]) / 8)));
+    f.sort((p, q) => (p.x * d.x + p.z * d.z) - (q.x * d.x + q.z * d.z));
+    f.forEach((p, j) => EIXO.push({ x: p.x, z: p.z, s: t[1] + (t[2] - t[1]) * (j + 0.5) / f.length }));
+  });
+}
+function estacaDe(x, z) {  // projecao no segmento do eixo mais proximo
+  let best = Infinity, sb = 0;
+  for (let i = 0; i < EIXO.length - 1; i++) {
+    const a = EIXO[i], b = EIXO[i + 1], dx = b.x - a.x, dz = b.z - a.z, L2 = dx * dx + dz * dz || 1;
+    const u = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / L2));
+    const px = a.x + u * dx - x, pz = a.z + u * dz - z, d2 = px * px + pz * pz;
+    if (d2 < best) { best = d2; sb = a.s + u * (b.s - a.s); }
+  }
+  return sb;
+}
+const GLSL_DECL = 'varying float vEst;\nvarying vec3 vWP;\nuniform float uA;\nuniform float uB;\nuniform float uT;\nuniform float uC;\nuniform float uCab;\nuniform float uL;\nuniform vec4 uLB;\n'
+  + 'bool aberto(float s) { return s < uCab ? s >= uC : s >= uT; }\n'
+  + 'bool noLote() { return vWP.x > uLB.x && vWP.x < uLB.z && vWP.z > uLB.y && vWP.z < uLB.w; }\n';
+function injetaV(sh) {
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aEst;\nvarying float vEst;\nvarying vec3 vWP;')
+    .replace('#include <begin_vertex>', '#include <begin_vertex>\nvEst = aEst;\nvWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+}
+// o que a peca ainda nao tem (descarta o fragmento): mesma regra no desenho, na sombra e nos raios (existe())
+function regraGLSL(r) {
+  const c = [];
+  if (r.modo === 'terreno') c.push('if (!(noLote() ? uL > 0.5 : aberto(vEst))) discard;');
+  if (r.modo === 'hoje') c.push('if (noLote() ? uL > 0.5 : aberto(vEst)) discard;');
+  if (r.terr) c.push('if (!aberto(vEst)) discard;');
+  if (r.modo === 'some') c.push('if (vEst < uB) discard;');
+  return c.join('\n');
+}
+function uniformes(r) { const U = FASE[r.chave] || { uA: { value: 1e9 }, uB: { value: 1e9 } }; return { ...G, uA: U.uA, uB: U.uB }; }
+// modo 'cor': terra -> 1a etapa (cBase) -> acabamento; 'some': aparece quando a frente passa;
+// 'terreno'/'hoje': terreno de projeto e terreno atual, complementares; terr: so existe onde a terraplenagem ja abriu
+function faseMat(m0, r) {
+  if (r.chave && !FASE[r.chave]) FASE[r.chave] = { uA: { value: 1e9 }, uB: { value: 1e9 }, lo: r.lo, hi: r.hi };
+  const m = m0.clone();
+  m.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, uniformes(r), { cTerra: { value: new THREE.Color('#A48A62') }, cBase: { value: new THREE.Color(r.cBase || '#A48A62') } });
+    injetaV(sh);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + GLSL_DECL + 'uniform vec3 cTerra;\nuniform vec3 cBase;')
+      .replace('#include <color_fragment>', '#include <color_fragment>\n' + regraGLSL(r) + '\n'
+        + (r.modo === 'cor' ? 'if (vEst < uA) diffuseColor.rgb = cTerra; else if (vEst < uB) diffuseColor.rgb = cBase;' : ''));
+  };
+  m.customProgramCacheKey = () => 'fase-' + r.chave + '-' + r.modo + (r.terr ? '-t' : '');
+  return m;
+}
+function faseSombra(r) {  // o que ainda nao existe tambem nao faz sombra
+  const dm = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+  dm.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, uniformes(r)); injetaV(sh);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + GLSL_DECL)
+      .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\n' + regraGLSL(r));
+  };
+  dm.customProgramCacheKey = () => 'fase-sombra-' + r.chave + '-' + r.modo + (r.terr ? '-t' : '');
+  return dm;
+}
+// o mesmo teste do shader em JavaScript, para os raios (caminhada, toque, colisao) nao baterem no que ainda nao existe
+// a estaca vem do mesmo atributo aEst interpolado no triangulo atingido (igual ao shader)
+const _tri = new THREE.Triangle(), _bc = new THREE.Vector3(), _pl = new THREE.Vector3(), _inv = new THREE.Matrix4();
+function estacaNoPonto(m, p, face) {
+  const a = m.geometry.attributes.aEst, pos = m.geometry.attributes.position;
+  if (!a || !face) return m.userData.regra.valor(p.x, p.z);
+  _pl.copy(p).applyMatrix4(_inv.copy(m.matrixWorld).invert());
+  _tri.setFromAttributeAndIndices(pos, face.a, face.b, face.c).getBarycoord(_pl, _bc);
+  return a.getX(face.a) * _bc.x + a.getX(face.b) * _bc.y + a.getX(face.c) * _bc.z;
+}
+function existe(m, p, face) {
+  const r = m.userData.regra; if (!r) return true;
+  const s = estacaNoPonto(m, p, face), lb = G.uLB.value;
+  // zonas exclusivas: na cabeceira so a contencao (2.6) libera a escavacao; no resto do corredor, o item 1.9
+  const ab = s < G.uCab.value ? s >= G.uC.value : s >= G.uT.value;
+  const lote = p.x > lb.x && p.x < lb.z && p.z > lb.y && p.z < lb.w;
+  if (r.modo === 'terreno' && !(lote ? G.uL.value > 0.5 : ab)) return false;
+  if (r.modo === 'hoje' && (lote ? G.uL.value > 0.5 : ab)) return false;
+  if (r.terr && !ab) return false;
+  if (r.modo === 'some' && s < FASE[r.chave].uB.value) return false;
+  return true;
+}
+const reais = (hs) => hs.filter((h) => existe(h.object, h.point, h.face));
+// objeto -> (nome do material no GLB ou '*' -> regra { chave, modo, terr, cBase, base })
+const VI = { lo: () => VIAS_INI, hi: () => VIAS_FIM };            // frente do viario: Rua Ervalia -> Rua Alianca
+const CA = { lo: () => 0, hi: () => QUADRO };                       // frente do canal: saida -> cabeceira
+const CB = { lo: () => 0, hi: () => VIAS_INI };                     // contencao da cabeceira (0-345 m)
+const R = (chave, modo, faixa, extra = {}) => ({ chave, modo, terr: true, ...faixa, ...extra });
+const FASES_OBJ = {
+  Terreno: { '*': { modo: 'terreno' } }, Terreno_hoje: { '*': { modo: 'hoje' } },
+  Avenidas: { '*': R('pista', 'cor', VI, { cBase: '#A9A08C' }) },                                   // 4.1 base de brita -> 4.5 rolamento
+  Calcadas: { Calcada: R('calcada', 'cor', VI), Guia: R('guia', 'cor', VI) },                         // 5.2 calcada; 4.3 guia e sarjeta
+  Travessias: { Asfalto: R('entorno', 'cor', VI, { cBase: '#A9A08C' }), Calcada: R('calc_ent', 'cor', VI), Faixa_pintada: R('sinal', 'some', VI) },
+  Ligacoes_viarias: { Asfalto: R('entorno', 'cor', VI, { cBase: '#A9A08C' }), Calcada: R('calc_ent', 'cor', VI) },  // 4.2/4.6 e 5.3
+  Faixas: { '*': R('sinal', 'some', VI) },                                                            // 5.4 sinalizacao viaria
+  Postes: { '*': R('calcada', 'some', VI) }, Arvores: { '*': R('calcada', 'some', VI) },              // premissa: junto com a calcada (5.2)
+  Taludes: { '*': R('canal', 'cor', CA) },                                                            // grama quando o canal passa no trecho
+  Saida_canal: { '*': R('canal', 'cor', CA) }, Agua_saida: { '*': R('canal', 'some', CA) },
+  Faces_grampeadas: { '*': R('cont', 'cor', CB) }, Grampos: { '*': R('cont', 'some', CB) },          // 2.6 por paineis
+  Muros_lote: { '*': { chave: 'muro', modo: 'some', eixo: true } },                                   // 6.2 ao longo da divisa
+};
+for (const t of TRECHOS) {  // 2.1: o trecho em execucao fica parte em vala de terra, parte pronto
+  FASES_OBJ['Canal_' + t[0]] = { '*': R('canal', 'cor', CA, t[5] === 'fechado' ? { base: M_GAL } : {}) };
+  FASES_OBJ['Agua_' + t[0]] = { '*': R('canal', 'some', CA) };
+  FASES_OBJ['GuardaCorpo_' + t[0]] = { '*': R('canal', 'some', CA) };
+}
+function preparaFases() {
+  montaEixoEstacas();
+  const v = V3();
+  // caixa do lote da torre (terraplenagem 6.1): o terreno de projeto ali segue o lote, nao o canal
+  const bl = new THREE.Box3();
+  for (const n of ['Lote_Rodoanel', 'Estacionamento_lote', 'Muros_lote']) if (N[n]) bl.union(new THREE.Box3().setFromObject(N[n]));
+  if (!bl.isEmpty()) G.uLB.value.set(bl.min.x - 3, bl.min.z - 3, bl.max.x + 3, bl.max.z + 3);
+  G.uCab.value = VIAS_INI;
+  // muro do lote: frente ao longo do maior lado da caixa
+  const bm = N.Muros_lote ? new THREE.Box3().setFromObject(N.Muros_lote) : null;
+  const eixoX = bm && (bm.max.x - bm.min.x) >= (bm.max.z - bm.min.z);
+  const valorEixo = (x, z) => (eixoX ? x : z);
+  for (const [nome, mapa] of Object.entries(FASES_OBJ)) {
+    for (const m of malhas(N[nome])) {
+      const nm = (m.userData.mat0 && m.userData.mat0.name) || '', reg = mapa[nm] || mapa['*'];
+      if (!reg) continue;
+      const r = { ...reg };
+      if (r.eixo) { r.lo = eixoX ? bm.min.x : bm.min.z; r.hi = eixoX ? bm.max.x : bm.max.z; }
+      else if (r.lo) { r.lo = r.lo(); r.hi = r.hi(); }
+      r.valor = r.eixo ? valorEixo : estacaDe;
+      const pos = m.geometry.attributes.position, est = new Float32Array(pos.count);
+      for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld); est[i] = r.valor(v.x, v.z); }
+      m.geometry.setAttribute('aEst', new THREE.BufferAttribute(est, 1));
+      m.userData.fase = r.chave; m.userData.regra = r;
+      m.userData.mat0 = m.material = faseMat(r.base || m.userData.mat0, r);
+      if (r.terr || r.modo === 'some') m.customDepthMaterial = faseSombra(r);
+    }
+  }
+  // carros: nos soltos no GLB (Carro_nnnn); os modelos-fonte (generico-*) nao entram na cena
+  for (const [nome, o] of Object.entries(N)) {
+    if (/^generico-/.test(nome)) o.visible = false;
+    if (/^Carro_\d+/.test(nome)) { const p = new THREE.Box3().setFromObject(o).getCenter(V3()); o.userData.est = estacaDe(p.x, p.z); carros.push(o); }
+  }
+}
+// limite para um avanco f (0..1) da frente que vai de hi para lo (valor >= limite = feito)
+function limiteEm(f, lo, hi) { return f <= 0 ? 1e9 : f >= 0.999 ? -1e9 : hi - f * (hi - lo); }
+function limite(f) { return limiteEm(f, VIAS_INI, VIAS_FIM); }
+function setFase(chave, fA, fB) { const U = FASE[chave]; if (U) { U.uA.value = limiteEm(fA, U.lo, U.hi); U.uB.value = limiteEm(fB, U.lo, U.hi); } }
+window.__fase = (chave) => (FASE[chave] ? { uA: FASE[chave].uA.value, uB: FASE[chave].uB.value } : null);
+window.__G = () => ({ terr: G.uT.value, cab: G.uC.value, lote: G.uL.value });
+window.__carros = () => carros.filter((o) => o.visible).length;  // conferencia automatica (teste-frente.mjs)
+// teste: camera elevada ao lado do eixo na estaca s, olhando para jusante (frente de obra)
+window.__olhar = (s, dist = 70, alt = 45) => {
+  const at = (q) => { let i = EIXO.findIndex((p) => p.s >= q); if (i < 1) i = 1; const a = EIXO[i - 1], b = EIXO[i], u = (q - a.s) / ((b.s - a.s) || 1); return V3(a.x + u * (b.x - a.x), 0, a.z + u * (b.z - a.z)); };
+  const p = at(s), q = at(s + 30), d = V3(q.x - p.x, 0, q.z - p.z).normalize(), lado = V3(-d.z, 0, d.x);
+  const y = chaoY(p.x, p.z) ?? 0;
+  camera.position.set(p.x - d.x * dist + lado.x * dist * 0.5, y + alt, p.z - d.z * dist + lado.z * dist * 0.5);
+  controls.target.set(p.x + d.x * 40, y, p.z + d.z * 40); controls.update();
+};
 
 const legbtn = document.getElementById('legbtn');
 legbtn.addEventListener('click', () => { const w = legbtn.parentElement; const ab = w.classList.toggle('aberta'); legbtn.setAttribute('aria-expanded', String(ab)); legbtn.textContent = ab ? 'Fechar legenda' : 'Legenda'; });
@@ -346,36 +523,49 @@ function apply(t) {
   const proj = cum('1.2.', t), dem = cum('1.8.', t), can = cum('2.1.', t), pav = cum('4.', t);
   const est = cum('7.4.', t), fech = cum('7.6.', t);
   const terl = cum('6.1.', t);  // terraplenagem do lote da torre (meses 6 a 9)
-  const hoje = can <= 0 && est <= 0 && pav <= 0 && terl <= 0;
-  // antes da obra: terreno original; depois: superficie de projeto (canal, avenidas e plataforma ja escavados)
-  mostra('Terreno_hoje', hoje); mostra('Terreno', !hoje);
+  // terreno por zona: o de projeto (canal, avenidas e plataforma escavados) so aparece onde a terraplenagem ja passou.
+  // Corredor do canal: item 1.9, de jusante para montante; cabeceira (0-345 m): a escavacao desce com o solo
+  // grampeado (2.6), por paineis; lote da torre: 6.1. Fora disso continua o terreno atual.
+  G.uT.value = limiteEm(cum('1.9.', t), 0, QUADRO);
+  G.uC.value = limiteEm(cum('2.6.', t), 0, VIAS_INI);
+  G.uL.value = terl > 0 ? 1 : 0;
+  mostra('Terreno_hoje', true); mostra('Terreno', true);
   rem.forEach((o, i) => {
     const n = rem.length, f = THREE.MathUtils.clamp(dem * n - i, 0, 1);
     pinta(o, proj > 0.02 ? M_LARANJA : null);
     o.scale.y = Math.max(0.001, 1 - f); o.visible = f < 1;
   });
-  TRECHOS.forEach(([nome, , fim, , , tipo]) => {
-    const pronto = can * QUADRO >= fim - 1e-6;  // trecho concluido quando o avanco do item 2.1 passa do fim dele
-    mostra('Canal_' + nome, !hoje); pinta(N['Canal_' + nome], pronto ? (tipo === 'fechado' ? M_GAL : null) : M_SOLO);  // antes: vala aberta em terra
-    mostra('Agua_' + nome, !hoje && pronto && tipo === 'aberto');
-    mostra('GuardaCorpo_' + nome, !hoje && pronto);
-  });
-  const pavim = pav >= 0.99;
-  for (const nome of ['Avenidas', 'Calcadas', 'Travessias', 'Ligacoes_viarias']) { mostra(nome, !hoje); pinta(N[nome], pavim ? null : M_SOLO); }  // antes: leito em terra
-  mostra('Taludes', !hoje);
-  // solo grampeado da cabeceira (item 2.6, contencao no canal): face em terra ate concluir; grampos desde o inicio do item
+  // canal (2.1) de jusante para montante, metro a metro: vala em terra atras da escavacao, concreto quando a frente passa;
+  // agua e guarda-corpo so no trecho pronto. A saida (T10) e o primeiro trecho: fica pronta ja no inicio do item.
+  setFase('canal', can, can);
+  for (const [nome, , , , , tipo] of TRECHOS) { mostra('Canal_' + nome, true); mostra('Agua_' + nome, tipo === 'aberto'); mostra('GuardaCorpo_' + nome, true); }
+  // viario por frente de obra (de jusante para montante), etapa a etapa pelos itens do CFF:
+  // leito em terra -> base de brita (4.1) -> rolamento (4.5); guia e sarjeta (4.3); calcada (5.2); sinalizacao (5.4)
+  setFase('pista', cum('4.1.', t), cum('4.5.', t));
+  setFase('entorno', cum('4.2.', t), cum('4.6.', t));
+  setFase('guia', cum('4.3.', t), cum('4.3.', t));
+  setFase('calcada', cum('5.2.', t), cum('5.2.', t));
+  setFase('calc_ent', cum('5.3.', t), cum('5.3.', t));
+  setFase('sinal', cum('5.4.', t), cum('5.4.', t));
+  for (const nome of ['Avenidas', 'Calcadas', 'Travessias', 'Ligacoes_viarias', 'Faixas', 'Postes', 'Arvores', 'Taludes']) mostra(nome, true);
+  // carros so na via liberada (atras da frente da sinalizacao)
+  const limCarro = limite(cum('5.4.', t));
+  carros.forEach((o) => { o.visible = o.userData.est >= limCarro; });
+  // solo grampeado da cabeceira (2.6): por paineis de jusante para montante; a face fica em terra ate o painel
+  // receber grampos e concreto projetado
   const cont = cum('2.6.', t);
-  mostra('Faces_grampeadas', !hoje); pinta(N['Faces_grampeadas'], cont >= 0.999 ? null : M_SOLO);
-  mostra('Grampos', !hoje && cont > 0);
-  // muro de arrimo na divisa do lote da torre (item 6.2): aparece quando o item comeca
-  mostra('Muros_lote', cum('6.2.', t) > 0);
-  // saida do canal (fim de T10): em terra ate o canal ficar pronto
-  mostra('Saida_canal', !hoje); pinta(N['Saida_canal'], can >= 0.999 ? null : M_SOLO);
-  mostra('Agua_saida', !hoje && can >= 0.999);
-  for (const nome of ['Faixas', 'Postes', 'Carros', 'Arvores']) mostra(nome, pavim);
-  mostra('Lote_Rodoanel', !hoje); pinta(N['Lote_Rodoanel'], terl >= 0.999 ? null : M_SOLO);
-  // estacionamento do condominio: leito em terra durante a terraplenagem, asfalto depois
-  mostra('Estacionamento_lote', !hoje); pinta(N['Estacionamento_lote'], terl >= 0.999 ? null : M_SOLO);
+  setFase('cont', cont, cont);
+  mostra('Faces_grampeadas', true); mostra('Grampos', cont > 0);
+  // muro de arrimo na divisa do lote da torre (6.2): executado ao longo da divisa, do inicio ao fim do item
+  const muro = cum('6.2.', t);
+  setFase('muro', muro, muro); mostra('Muros_lote', muro > 0);
+  // saida do canal: parte do trecho T10, segue a frente do canal
+  mostra('Saida_canal', true); mostra('Agua_saida', true);
+  // lote da torre: plataforma em terra durante a terraplenagem (6.1)
+  mostra('Lote_Rodoanel', terl > 0); pinta(N['Lote_Rodoanel'], terl >= 0.999 ? null : M_SOLO);
+  // estacionamento do condominio: leito em terra; base com 4.2 e asfalto com 4.6 (itens "ruas do entorno e condominial")
+  mostra('Estacionamento_lote', terl > 0);
+  pinta(N['Estacionamento_lote'], cum('4.6.', t) >= 0.999 ? null : cum('4.2.', t) >= 0.999 ? M_BRITA : M_SOLO);
   const nEst = Math.round(est * floors.length), nFech = Math.round(fech * floors.length);
   floors.forEach((o, i) => { o.visible = i < nEst; pinta(o, i < nFech ? null : M_ESTR); });
   mostra('Torre_Cobertura', est >= 0.999); mostra('Arvores_lote', fech >= 0.999);
@@ -417,6 +607,12 @@ function onModel(g) {
   for (const nome of ['Terreno', 'Terreno_hoje', 'Taludes', 'Lote_Rodoanel'])
     for (const m of malhas(N[nome])) if (m.userData.mat0 && m.userData.mat0.color) { m.userData.mat0.color.set(nome === 'Taludes' ? '#7E9A5E' : nome === 'Lote_Rodoanel' ? '#B4C08E' : '#8AA06A'); m.userData.mat0.roughness = 0.95; }
   scene.add(root);
+  root.updateMatrixWorld(true);
+  preparaFases();
+  // pre-compila todos os materiais (inclusive os da frente de obra) para nao engasgar quando aparecem pela primeira vez
+  { const vis = []; root.traverse((o) => { vis.push([o, o.visible]); o.visible = true; });
+    try { renderer.compile(scene, camera); } catch (e) { /* compilacao antecipada e so otimizacao */ }
+    for (const [o, v] of vis) o.visible = v; }
   // enquadramento pelo terreno (objetos de marcacao vazios, como a agua das galerias, ficam fora da caixa)
   const box = new THREE.Box3().setFromObject(N['Terreno_hoje'] || N['Terreno'] || root);
   const c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
@@ -575,10 +771,19 @@ function irVista(i) {
 
 // caminhada: olhos a 1,70 m sobre o chao (terreno, avenidas, calcadas, plato)
 const raio = new THREE.Raycaster();
+// parede de edificacao so conta acima do terreno atual: a escavacao expoe a parte enterrada das casas, que nao bloqueia
+const raioH = new THREE.Raycaster();
+function acimaDoChaoAtual(h) {
+  if (!/^Casas_/.test((() => { let o = h.object; while (o && !N[o.name]) o = o.parent; return o ? o.name : ''; })())) return true;
+  if (!N.Terreno_hoje) return true;
+  raioH.set(V3(h.point.x, siteBox.max.y + 400, h.point.z), V3(0, -1, 0));
+  const g = raioH.intersectObject(N.Terreno_hoje, true)[0];
+  return !g || h.point.y > g.point.y - 0.3;
+}
 function chaoY(x, z, ref) {
   const alvos = GROUND.map((n) => N[n]).filter((o) => o && o.visible);
   raio.set(V3(x, siteBox.max.y + 400, z), V3(0, -1, 0));
-  const hs = raio.intersectObjects(alvos, true);
+  const hs = reais(raio.intersectObjects(alvos, true));
   if (!hs.length) return null;
   // entre os pontos de cima para baixo, o primeiro que nao fique muito acima do pe atual (evita subir em paredes do canal)
   return hs[0].point.y;
@@ -610,7 +815,7 @@ function escolherPonto(e) {
   const obst = Object.keys(N).filter((n) => /^(Casas_|Torre_Pav|Muros_lote|Faces_grampeadas)/.test(n));
   const vivos = (nomes) => nomes.map((n) => N[n]).filter((o) => o && o.visible);
   const nomeDe = (h) => { let o = h.object; while (o && !N[o.name]) o = o.parent; return o ? o.name : ''; };
-  const hs = ray.intersectObjects(vivos([...GROUND, ...obst]), true);
+  const hs = reais(ray.intersectObjects(vivos([...GROUND, ...obst]), true));
   if (!hs.length) { mostraDica('Toque sobre o terreno, a via ou o lote', 2500); return; }
   let pt = hs[0].point.clone();
   if (!GROUND.includes(nomeDe(hs[0]))) {
@@ -618,12 +823,21 @@ function escolherPonto(e) {
     const back = camera.position.clone().sub(pt).setY(0).normalize(); let achou = null;
     for (let d = 3; d <= 90 && !achou; d += 3) {
       const q = pt.clone().addScaledVector(back, d); raio.set(V3(q.x, siteBox.max.y + 400, q.z), V3(0, -1, 0));
-      const h = raio.intersectObjects(vivos([...GROUND, ...obst]), true)[0];
+      const h = reais(raio.intersectObjects(vivos([...GROUND, ...obst]), true))[0];
       if (h && GROUND.includes(nomeDe(h))) achou = h.point;
     }
     if (!achou) { mostraDica('Toque num espaço livre: terreno, via ou lote', 3000); return; }
     pt = achou.clone();
   }
+  // ponto cercado de paredes (dentro de um quarteirao de casas): pede outro ponto
+  const alvosC = Object.keys(N).filter((n) => /^(Casas_|Torre_Pav|Muros_lote)/.test(n)).map((n) => N[n]).filter((o) => o.visible);
+  let cerc = 0;
+  for (let k = 0; k < 8; k++) {
+    const a = k * Math.PI / 4; raio.set(V3(pt.x, pt.y + 1.0, pt.z), V3(Math.cos(a), 0, Math.sin(a))); raio.far = 2.5;
+    if (reais(raio.intersectObjects(alvosC, true)).filter(acimaDoChaoAtual).length) cerc++;
+  }
+  raio.far = Infinity;
+  if (cerc >= 5) { mostraDica('Toque num espaço livre: terreno, via ou lote', 3000); return; }
   mostraDica(''); iniciaCaminhada(pt);
 }
 function navDown(e) {
@@ -689,7 +903,7 @@ function navTick(now, dt) {
     if (passo > 1e-4) {
       raio.set(V3(camera.position.x, andar.gy + 1.0, camera.position.z), V3(sx / passo, 0, sz / passo)); raio.far = passo + 0.7;
       const alvos = Object.keys(N).filter((n) => /^(Casas_|Torre_Pav|Muros_lote)/.test(n)).map((n) => N[n]).filter((o) => o.visible);
-      if (raio.intersectObjects(alvos, true).length) { sx = 0; sz = 0; } raio.far = Infinity;
+      { const hb = reais(raio.intersectObjects(alvos, true)).filter(acimaDoChaoAtual); if (hb.length) { sx = 0; sz = 0; let o = hb[0].object; while (o && !N[o.name]) o = o.parent; window.__bloq = o ? o.name : '?'; } } raio.far = Infinity;
     }
     camera.position.x += sx; camera.position.z += sz;
     camera.position.x = clamp(camera.position.x, siteBox.min.x, siteBox.max.x); camera.position.z = clamp(camera.position.z, siteBox.min.z, siteBox.max.z);
@@ -736,7 +950,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   const r = renderer.domElement.getBoundingClientRect();
   ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ptr, camera);
-  const hit = ray.intersectObjects(pick.filter((o) => o.visible), true)[0];
+  const hit = reais(ray.intersectObjects(pick.filter((o) => o.visible), true))[0];
   if (!hit) { info.hidden = true; return; }
   let o = hit.object; while (o && !N[o.name]) o = o.parent;  // sobe ate o objeto nomeado
   const n = o ? o.name : '';
@@ -759,7 +973,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   } else if (n === 'Travessias') {
     h = '<h2>Travessias sobre o canal</h2>Rua Gomes (trecho T06, 18 m) e Rua Buritu (T08, 20 m): o canal passa fechado sob a rua, que liga as duas avenidas marginais. Pista de 5,0 m (Gomes) e 6,0 m (Buritu) com passeios de 2,0 m. Posição e larguras pela folha 1.26 do edital (anteprojeto de pavimentação). Item 4 do cronograma.';
   } else if (n === 'Estacionamento_lote') {
-    h = '<h2>Estacionamento do condomínio</h2>Rampa de 757,60 a 765,00, com as cotas de projeto da folha 1.28 do edital (anteprojeto de terraplenagem). Leito em terra durante a terraplenagem do lote (item 6.1, meses 6 a 9).';
+    h = '<h2>Estacionamento do condomínio</h2>Rampa de 757,60 a 765,00, com as cotas de projeto da folha 1.28 do edital (anteprojeto de terraplenagem). Leito em terra durante a terraplenagem do lote (item 6.1, meses 6 a 9), base com o item 4.2 e asfalto com o 4.6 (ruas do entorno e condominial).';
   } else if (n === 'Lote_Rodoanel') {
     h = '<h2>Terraplenagem do lote</h2>Platô nas cotas da folha 1.28 (756,25 a 757,00 junto aos prédios) e taludes de 1V:1H no corte e 1V:1,5H no aterro até o terreno ou até a divisa. No modelo: corte de 8.717 m³ e aterro de 1.020 m³; as notas da folha 1.28 indicam 10.996 e 1.241 m³. Item 6.1 do cronograma: meses 6 a 9.';
   } else if (n.startsWith('Torre_Pav')) {
@@ -788,5 +1002,4 @@ resize();
 requestAnimationFrame(tick);
 </script>
 
-</body>
-</html>
+</body></html>
